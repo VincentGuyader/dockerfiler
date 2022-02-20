@@ -14,7 +14,7 @@ available_distros <- c("xenial" , "bionic" , "focal" , "centos7" , "centos8")
 #' @param distro One of "focal", "bionic", "xenial", "centos7", or "centos8". See available distributions at https://hub.docker.com/r/rstudio/r-base/.
 #' @param sysreqs boolean. If TRUE, the Dockerfile will contain sysreq installation.
 #' @param expand boolean. If `TRUE` each system requirement will have its own `RUN` line.
-#' @param out_dir The directory where to write the `Dockerfile`. When `NULL` no file is written. `NULL` by default.
+# @param out_dir The directory where to write the `Dockerfile`. When `NULL` no file is written. `NULL` by default.
 #' @param repos character. The URL(s) of the repositories to use for `options("repos")`.
 #' @param extra_sysreqs character vector. Extra debian system requirements.
 #'    Will be installed with apt-get install.
@@ -38,7 +38,7 @@ available_distros <- c("xenial" , "bionic" , "focal" , "centos7" , "centos8")
 #' @export
 dock_from_renv <- function(lockfile = "renv.lock",
                            distro = "focal",
-                           out_dir = tempdir(),
+                           # out_dir = tempdir(),
                            FROM = "rocker/r-base",
                            AS = NULL,
                            sysreqs = TRUE,
@@ -54,7 +54,9 @@ dock_from_renv <- function(lockfile = "renv.lock",
   lock <- getFromNamespace("lockfile", "renv")(lockfile)
 
     lock$repos(CRAN = repos)
-    lockfile <- file.path(out_dir,paste0(basename(lockfile), ".dock"))
+    # lockfile <- file.path(out_dir,paste0(basename(lockfile), ".dock"))
+    # lockfile <- paste0(basename(lockfile), ".dock")
+    lockfile <- basename(lockfile)
     lock$write(lockfile)
 
   # start the dockerfile
@@ -120,6 +122,11 @@ dock_from_renv <- function(lockfile = "renv.lock",
 
     pkg_installs <- unique(unlist(pkg_sysreqs))
 
+    if (length(pkg_installs) == 0) {
+      cli::cli_bullets("No sysreqs required")
+    }
+
+
     cat_green_tick("Done") # TODO animated version ?
   } else {
     pkg_installs <- NULL
@@ -147,7 +154,7 @@ dock_from_renv <- function(lockfile = "renv.lock",
       paste(gsub(pkg_installs, pattern = install_cmd, replacement = ""),
             collapse = " ")
     if (compact != "") {
-      pkg_installs <- paste(update_cmd, ";", install_cmd, compact,";",clean_cmd)
+      pkg_installs <- paste(update_cmd, "&&", install_cmd, compact,"&&",clean_cmd)
     }
   } else{
     dock$RUN(update_cmd)
@@ -173,11 +180,6 @@ dock_from_renv <- function(lockfile = "renv.lock",
   dock$RUN(glue::glue('R -e "{renv_install}"'))
 
   dock$RUN(r(renv::restore()))
-
-  #
-  #
-  # cat_bullet("write {Dockerfile} in {out_dir}")
-  # if (!is.null(out_dir)) dock$write(file.path(out_dir, "Dockerfile"))
 
   dock
 }
