@@ -12,9 +12,8 @@ available_distros <- c("xenial" , "bionic" , "focal" , "centos7" , "centos8")
 #'     FROM rocker/r-base
 #' @param AS The AS of the Dockerfile. Default it NULL.
 #' @param distro One of "focal", "bionic", "xenial", "centos7", or "centos8". See available distributions at https://hub.docker.com/r/rstudio/r-base/.
-#' @param sysreqs boolean. If TRUE, the Dockerfile will contain sysreq installation.
+#' @param sysreqs boolean. If `TRUE`, the Dockerfile will contain sysreq installation.
 #' @param expand boolean. If `TRUE` each system requirement will have its own `RUN` line.
-# @param out_dir The directory where to write the `Dockerfile`. When `NULL` no file is written. `NULL` by default.
 #' @param repos character. The URL(s) of the repositories to use for `options("repos")`.
 #' @param extra_sysreqs character vector. Extra debian system requirements.
 #'    Will be installed with apt-get install.
@@ -26,38 +25,31 @@ available_distros <- c("xenial" , "bionic" , "focal" , "centos7" , "centos8")
 #'
 #' The R version is taken from the `renv.lock` file. Packages are installed using `renv::restore()` which ensures that the proper package version and source is used when installed.
 #'
-#' By default, `dock_from_renv()` will utilize the [public RStudio Package Manager](https://packagemanager.rstudio.com/) (PPM) to provide linux binaries. This dramatically improves install time. This is done when `use_rspm = TRUE`.  To do so, a new file `renv.lock.dock` will be created so as to not overwrite your existing `renv.lock` file. This new `renv.lock.dock` file is used to build the Docker image with PPM binaries.
 #' @importFrom purrr possibly
 #' @importFrom glue glue
 #' @importFrom pak pkg_system_requirements
 #' @examples
 #' \dontrun{
-#' dock <- dock_from_renv("renv.lock", distro = "xenial", out_dir = getwd())
-#' dock
+#' dock <- dock_from_renv("renv.lock", distro = "xenial")
+#' dock$write("Dockerfile")
 #' }
 #' @export
 dock_from_renv <- function(lockfile = "renv.lock",
                            distro = "focal",
-                           # out_dir = tempdir(),
                            FROM = "rocker/r-base",
                            AS = NULL,
                            sysreqs = TRUE,
-                           repos = c(
-                             CRAN = "https://cran.rstudio.com/"),#,
-                             # RSPM = paste0("https://packagemanager.rstudio.com/all/__linux__/", distro, "}/latest" ),
+                           repos = c(CRAN = "https://cran.rstudio.com/"),
                            expand = FALSE,
-                                extra_sysreqs = NULL
+                           extra_sysreqs = NULL
                            ) {
 
   distro <- match.arg(distro, available_distros)
 
   lock <- getFromNamespace("lockfile", "renv")(lockfile)
 
-    lock$repos(CRAN = repos)
-    # lockfile <- file.path(out_dir,paste0(basename(lockfile), ".dock"))
-    # lockfile <- paste0(basename(lockfile), ".dock")
+    # lock$repos(CRAN = repos)
     lockfile <- basename(lockfile)
-    lock$write(lockfile)
 
   # start the dockerfile
   R_major_minor <- paste(strsplit(lock$data()$R$Version, "[.]")[[1]][1:2], collapse = ".")
@@ -139,9 +131,7 @@ dock_from_renv <- function(lockfile = "renv.lock",
   if (length(extra_sysreqs) > 0) {
     extra <- paste(install_cmd,
                    extra_sysreqs)
-
     pkg_installs <- c(pkg_installs, extra)
-
   }
 
 
@@ -177,8 +167,7 @@ dock_from_renv <- function(lockfile = "renv.lock",
   renv_install <- glue::glue("install.packages('renv')")
 
   dock$COPY(basename(lockfile), "renv.lock")
-  dock$RUN(glue::glue('R -e "{renv_install}"'))
-
+  dock$RUN("R -e 'install.packages(\"renv\")'")
   dock$RUN(r(renv::restore()))
 
   dock

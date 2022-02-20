@@ -15,3 +15,4 @@
 ^dev$
 ^dockerfiler\.Rproj$
 ^\.dockerignore$
+^/tmp/RtmptVJDDP/deploy/dockerfiler_0\.1\.5\.tar\.gz$
