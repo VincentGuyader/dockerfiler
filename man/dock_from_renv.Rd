@@ -9,8 +9,7 @@ dock_from_renv(
   distro = "focal",
   out_dir = NULL,
   FROM = "rocker/r-base",
-  repos = c(RSPM = paste0("https://packagemanager.rstudio.com/all/__linux__/", distro,
-    "}/latest"), CRAN = "https://cran.rstudio.com/")
+  repos = c(CRAN = "https://cran.rstudio.com/")
 )
 }
 \arguments{
