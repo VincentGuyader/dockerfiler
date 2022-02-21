@@ -115,7 +115,11 @@ dock_from_renv <- function(lockfile = "renv.lock",
     pkg_installs <- unique(unlist(pkg_sysreqs))
 
     if (length(pkg_installs) == 0) {
-      cli::cli_bullets("No sysreqs required")
+      cat_bullet(
+        "No sysreqs required",
+        bullet = "info",
+        bullet_col = "green"
+      )
     }
 
 
@@ -164,10 +168,10 @@ dock_from_renv <- function(lockfile = "renv.lock",
     )
   )
 
-  renv_install <- glue::glue("install.packages('renv')")
+  renv_install <- glue::glue("install.packages(c('renv','remote')")
+  dock$RUN("R -e 'install.packages(\"renv\")'")
 
   dock$COPY(basename(lockfile), "renv.lock")
-  dock$RUN("R -e 'install.packages(\"renv\")'")
   dock$RUN(r(renv::restore()))
 
   dock
