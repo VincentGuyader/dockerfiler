@@ -168,8 +168,7 @@ dock_from_renv <- function(lockfile = "renv.lock",
     )
   )
 
-  renv_install <- glue::glue("install.packages(c('renv','remote')")
-  dock$RUN("R -e 'install.packages(\"renv\")'")
+  dock$RUN("R -e 'install.packages(c(\"renv\",\"remotes\"))'")
 
   dock$COPY(basename(lockfile), "renv.lock")
   dock$RUN(r(renv::restore()))
